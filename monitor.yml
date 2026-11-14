@@ -1,47 +1,52 @@
-name: Crypto arbitrage monitor
+
+name: Wallex-Nobitex Arbitrage Monitor
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "*/10 * * * *"
-  workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
   group: arbitrage-monitor
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  scan:
+  monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Run scanner
+
+      - name: Run arbitrage monitor
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           WALLEX_TAKER_FEE: ${{ secrets.WALLEX_TAKER_FEE }}
           NOBITEX_TAKER_FEE: ${{ secrets.NOBITEX_TAKER_FEE }}
+          TRANSFER_CONFIRMED_ROUTES: ${{ secrets.TRANSFER_CONFIRMED_ROUTES }}
           MIN_GROSS_SPREAD_PCT: "2"
-          MAX_BOOK_AGE_SECONDS: "20"
-          MAX_CAPTURE_GAP_SECONDS: "8"
-          TRANSFER_ROUTE_CONFIRMED: "false"
+          MAX_BOOK_AGE_SECONDS: "30"
+          MAX_CAPTURE_GAP_SECONDS: "10"
         run: python main.py
-      - name: Persist alert state
+
+      - name: Save state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f state.json
+          git add state.json
           if ! git diff --cached --quiet; then
-            git commit -m "Update arbitrage alert state"
+            git commit -m "Update arbitrage monitor state"
             git push
           fi
