@@ -235,10 +235,21 @@ def nobitex_snapshot():
     return result
 
 
+
 def walk_depth(buy_asks, sell_bids, buy_multiplier, sell_multiplier,
                buy_fee, sell_fee, min_spread_pct):
-    asks = [[price * buy_multiplier, qty] for price, qty in buy_asks]
-    bids = [[price * sell_multiplier, qty] for price, qty in sell_bids]
+
+    asks = [
+        [price * buy_multiplier, qty]
+        for price, qty in buy_asks
+        if price > 0 and qty > 0
+    ]
+
+    bids = [
+        [price * sell_multiplier, qty]
+        for price, qty in sell_bids
+        if price > 0 and qty > 0
+    ]
 
     i = j = 0
     total_qty = D("0")
@@ -249,31 +260,54 @@ def walk_depth(buy_asks, sell_bids, buy_multiplier, sell_multiplier,
         ask_price, ask_qty = asks[i]
         bid_price, bid_qty = bids[j]
 
-        gross_pct_at_level = (bid_price / ask_price - D("1")) * D("100")
-        net_per_unit = bid_price * (D("1") - sell_fee) - ask_price * (D("1") + buy_fee)
+        if ask_price <= 0 or bid_price <= 0:
+            break
 
-        # Both books are sorted best-to-worst. If this pair fails, later
-        # pairs cannot improve the spread, so stop.
-        if gross_pct_at_level <= min_spread_pct or net_per_unit <= 0:
+        gross_pct_at_level = (
+            bid_price / ask_price - D("1")
+        ) * D("100")
+
+        net_per_unit = (
+            bid_price * (D("1") - sell_fee)
+            - ask_price * (D("1") + buy_fee)
+        )
+
+        if gross_pct_at_level <= min_spread_pct:
+            break
+
+        if net_per_unit <= 0:
             break
 
         qty = min(ask_qty, bid_qty)
+
+        if qty <= 0:
+            break
+
         total_qty += qty
         total_cost += ask_price * qty
         total_revenue += bid_price * qty
 
         asks[i][1] -= qty
         bids[j][1] -= qty
+
         if asks[i][1] <= 0:
             i += 1
+
         if bids[j][1] <= 0:
             j += 1
 
     if total_qty <= 0 or total_cost <= 0:
         return None
 
-    gross_pct = (total_revenue / total_cost - D("1")) * D("100")
-    net_profit = total_revenue * (D("1") - sell_fee) - total_cost * (D("1") + buy_fee)
+    gross_pct = (
+        total_revenue / total_cost - D("1")
+    ) * D("100")
+
+    net_profit = (
+        total_revenue * (D("1") - sell_fee)
+        - total_cost * (D("1") + buy_fee)
+    )
+
     net_pct = net_profit / total_cost * D("100")
 
     return {
@@ -286,7 +320,6 @@ def walk_depth(buy_asks, sell_bids, buy_multiplier, sell_multiplier,
         "net_profit": net_profit,
         "net_pct": net_pct,
     }
-
 
 def fee_env(venue):
     raw = os.getenv(f"{venue.upper()}_TAKER_FEE", "").strip()
