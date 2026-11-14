@@ -167,59 +167,63 @@ def nobitex_snapshot():
 
     result = {}
     received = time.time()
-    known_quotes = {"IRT", "IRR", "RLS", "TMN", "TOMAN", "USDT", "USDC", "BTC", "ETH"}
+    known_quotes = {
+        "IRT", "IRR", "RLS", "TMN", "TOMAN",
+        "USDT", "USDC", "BTC", "ETH"
+    }
 
     for symbol, book in books_payload.items():
         if symbol in {"status", "global"} or not isinstance(book, dict):
             continue
+
         pair = split_symbol(symbol, known_quotes)
         if not pair:
             continue
 
         base, quote_raw = pair
-quote, multiplier = quote_info(quote_raw)
+        quote, multiplier = quote_info(quote_raw)
 
-# Nobitex orderbook reports IRT prices in Rial, not Toman.
-if quote_raw == "IRT":
-    multiplier = D("0.1")
+        # Nobitex IRT orderbook prices are in Rial.
+        if quote_raw == "IRT":
+            multiplier = D("0.1")
 
         if not quote:
             continue
 
         asks = parse_levels(book, "ask", "Nobitex")
         bids = parse_levels(book, "bid", "Nobitex")
+
         if not asks or not bids:
             continue
 
         last_update = dec(book.get("lastUpdate"))
-        exchange_ts = float(last_update / D("1000")) if last_update > 0 else None
+        exchange_ts = (
+            float(last_update / D("1000"))
+            if last_update > 0 else None
+        )
 
-        stat_key = f"{base.lower()}-{'rls' if quote_raw in {'IRT', 'IRR', 'RLS', 'TMN', 'TOMAN'} else quote_raw.lower()}"
+        stat_key = (
+            f"{base.lower()}-"
+            f"{'rls' if quote_raw in {'IRT', 'IRR', 'RLS', 'TMN', 'TOMAN'} else quote_raw.lower()}"
+        )
+
         stat = stats_map.get(stat_key, {})
-        # Unknown status is not treated as proof that a market is closed.
-        is_closed = stat.get("isClosed") is True if isinstance(stat, dict) else False
+        is_closed = (
+            stat.get("isClosed") is True
+            if isinstance(stat, dict) else False
+        )
 
-        key = (base, quote)
-        if key in result:
-            logging.warning("Duplicate Nobitex normalized market ignored: %s", key)
-            continue
-
-        result[key] = {
-            "venue": "Nobitex",
-            "symbol": str(symbol),
-            "base": base,
-            "quote": quote,
-            "multiplier": multiplier,
+        result[(base, quote)] = {
             "asks": asks,
             "bids": bids,
             "received_at": received,
             "exchange_ts": exchange_ts,
             "is_closed": is_closed,
+            "source_symbol": symbol,
         }
 
-    if not result:
-        raise ValueError("No Nobitex orderbooks parsed; check current API schema")
     return result
+
 
 
 def walk_depth(buy_asks, sell_bids, buy_multiplier, sell_multiplier,
