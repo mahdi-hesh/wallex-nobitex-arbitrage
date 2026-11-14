@@ -213,13 +213,18 @@ def nobitex_snapshot():
             if isinstance(stat, dict) else False
         )
 
-        result[(base, quote)] = {
+                result[(base, quote)] = {
+            "venue": "Nobitex",
+            "symbol": str(symbol),
+            "source_symbol": symbol,
+            "base": base,
+            "quote": quote,
+            "multiplier": multiplier,
             "asks": asks,
             "bids": bids,
             "received_at": received,
             "exchange_ts": exchange_ts,
             "is_closed": is_closed,
-            "source_symbol": symbol,
         }
 
     return result
