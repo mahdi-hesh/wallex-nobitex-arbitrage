@@ -311,19 +311,62 @@ def save_state(state):
 def send_telegram(message):
     token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+
     if not token or not chat_id:
-        raise RuntimeError("Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID GitHub Secrets")
+        raise RuntimeError(
+            "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID"
+        )
 
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    response = SESSION.post(
-        url,
-        json={"chat_id": chat_id, "text": message, "disable_web_page_preview": True},
-        timeout=20,
-    )
-    response.raise_for_status()
-    payload = response.json()
-    if not payload.get("ok"):
-        raise RuntimeError(f"Telegram API error: {payload}")
+
+    for attempt in range(5):
+        # فاصله برای جلوگیری از محدودیت تعداد پیام
+        time.sleep(1.2)
+
+        response = SESSION.post(
+            url,
+            json={
+                "chat_id": chat_id,
+                "text": message,
+                "disable_web_page_preview": True
+            },
+            timeout=30,
+        )
+
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = {}
+
+        if response.status_code == 429:
+            retry_after = (
+                payload.get("parameters", {}).get("retry_after", 10)
+            )
+
+            logging.warning(
+                "Telegram rate limit. Waiting %s seconds.",
+                retry_after
+            )
+
+            if attempt < 4:
+                time.sleep(int(retry_after) + 1)
+                continue
+
+            raise RuntimeError(
+                "Telegram rate limit persisted after 5 attempts"
+            )
+
+        response.raise_for_status()
+
+        if not payload.get("ok"):
+            raise RuntimeError(
+                f"Telegram API error: {payload}"
+            )
+
+        return
+
+    raise RuntimeError("Telegram message could not be delivered")
+)
 
 
 def money(value):
