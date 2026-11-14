@@ -154,6 +154,7 @@ def wallex_snapshot():
     return result
 
 
+
 def nobitex_snapshot():
     books_payload = get_json(NOBITEX_DEPTH)
     stats_payload = get_json(NOBITEX_STATS)
@@ -167,6 +168,7 @@ def nobitex_snapshot():
 
     result = {}
     received = time.time()
+
     known_quotes = {
         "IRT", "IRR", "RLS", "TMN", "TOMAN",
         "USDT", "USDC", "BTC", "ETH"
@@ -183,12 +185,12 @@ def nobitex_snapshot():
         base, quote_raw = pair
         quote, multiplier = quote_info(quote_raw)
 
-        # Nobitex IRT orderbook prices are in Rial.
-        if quote_raw == "IRT":
-            multiplier = D("0.1")
-
         if not quote:
             continue
+
+        # Keep the existing unit conversion pending API verification.
+        if quote_raw == "IRT":
+            multiplier = D("0.1")
 
         asks = parse_levels(book, "ask", "Nobitex")
         bids = parse_levels(book, "bid", "Nobitex")
@@ -213,7 +215,7 @@ def nobitex_snapshot():
             if isinstance(stat, dict) else False
         )
 
-                result[(base, quote)] = {
+        result[(base, quote)] = {
             "venue": "Nobitex",
             "symbol": str(symbol),
             "source_symbol": symbol,
@@ -227,8 +229,10 @@ def nobitex_snapshot():
             "is_closed": is_closed,
         }
 
-    return result
+    if not result:
+        raise ValueError("No Nobitex orderbooks parsed; check current API schema")
 
+    return result
 
 
 def walk_depth(buy_asks, sell_bids, buy_multiplier, sell_multiplier,
