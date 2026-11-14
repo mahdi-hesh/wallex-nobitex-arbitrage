@@ -177,7 +177,12 @@ def nobitex_snapshot():
             continue
 
         base, quote_raw = pair
-        quote, multiplier = quote_info(quote_raw)
+quote, multiplier = quote_info(quote_raw)
+
+# Nobitex orderbook reports IRT prices in Rial, not Toman.
+if quote_raw == "IRT":
+    multiplier = D("0.1")
+
         if not quote:
             continue
 
