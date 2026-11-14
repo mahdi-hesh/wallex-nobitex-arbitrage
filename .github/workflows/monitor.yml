@@ -1,2 +1,37 @@
-schedule:
-  - cron: "*/10 * * * *"
+
+name: Wallex-Nobitex Arbitrage Monitor
+
+'on':
+  workflow_dispatch:
+  schedule:
+    - cron: '*/10 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitor
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WALLEX_TAKER_FEE: ${{ secrets.WALLEX_TAKER_FEE }}
+          NOBITEX_TAKER_FEE: ${{ secrets.NOBITEX_TAKER_FEE }}
+          TRANSFER_CONFIRMED_ROUTES: ${{ secrets.TRANSFER_CONFIRMED_ROUTES }}
+          MIN_GROSS_SPREAD_PCT: '2'
+          MAX_BOOK_AGE_SECONDS: '30'
+          MAX_CAPTURE_GAP_SECONDS: '10'
+        run: python main.py
