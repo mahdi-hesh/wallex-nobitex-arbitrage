@@ -366,7 +366,7 @@ def send_telegram(message):
         return
 
     raise RuntimeError("Telegram message could not be delivered")
-)
+
 
 
 def money(value):
