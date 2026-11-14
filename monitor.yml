@@ -1,7 +1,7 @@
 
 name: Wallex-Nobitex Arbitrage Monitor
 
-on:
+"on":
   workflow_dispatch:
   schedule:
     - cron: "*/10 * * * *"
