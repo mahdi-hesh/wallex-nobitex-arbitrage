@@ -402,7 +402,11 @@ def main():
         nobitex_future = executor.submit(nobitex_snapshot)
         wallex = wallex_future.result()
         nobitex = nobitex_future.result()
+    for market in wallex.values():
+        market["venue"] = "Wallex"
 
+    for market in nobitex.values():
+        market["venue"] = "Nobitex"
     wallex_fee = fee_env("WALLEX")
     nobitex_fee = fee_env("NOBITEX")
     routes = confirmed_routes()
