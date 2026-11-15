@@ -505,21 +505,26 @@ def main():
                 continue
 
             fees_known = buy_fee is not None and sell_fee is not None
-            net_positive = fees_known and result["net_profit"] > 0
+            fees_known = buy_fee is not None and sell_fee is not None
 
             route = f'{key[0]}|{key[1]}|{buy["venue"]}|{sell["venue"]}'
             manually_reviewed = route in routes
-
             route_reviewed = bool(manually_reviewed)
 
-            status = (
-                "تأییدنشده / نیازمند بررسی انتقال"
-                if not route_reviewed
-                else "محاسبات مثبت؛ مسیر دستی بررسی شده، انتقال زنده تأیید نشده"
-            )
+            unit = "تومان" if key[1] == "TOMAN" else key[1]
+
+            if not fees_known:
+                status = "کارمزدها نامشخص؛ سود خالص قابل تأیید نیست"
+            elif result["net_profit"] <= 0:
+                status = "اختلاف قیمت وجود دارد؛ سود پس از کارمزد مثبت نیست"
+            elif not route_reviewed:
+                status = "محاسبات مثبت؛ مسیر انتقال نیازمند بررسی"
+            else:
+                status = "محاسبات مثبت؛ مسیر دستی بررسی شده، انتقال زنده تأیید نشده"
 
             old = state.get(route, {})
             old_seen = float(old.get("last_seen", 0))
+
             materially_changed = (
                 not old
                 or now - old_seen > 900
@@ -538,16 +543,14 @@ def main():
             if not materially_changed:
                 continue
 
-            status = "تأییدنشده / نیازمند بررسی" if not confirmed else "تأییدشده طبق تأیید دستی مسیر"
-            unit = "تومان" if key[1] == "TOMAN" else key[1]
-            
-                        if fees_known:
+            if fees_known:
                 fee_text = (
                     f'کارمزد خرید: {buy_fee * 100:.4f}% '
                     f'({money(result["buy_fee_amount"])} {unit}) | '
                     f'کارمزد فروش: {sell_fee * 100:.4f}% '
                     f'({money(result["sell_fee_amount"])} {unit})'
                 )
+
                 net_text = (
                     f'سود خالص تخمینی پس از کارمزد: '
                     f'{money(result["net_profit"])} {unit} '
@@ -582,7 +585,8 @@ def main():
                 'کارمزد برداشت و تغییر دفتر سفارش می‌تواند نتیجه را عوض کند. '
                 'این پیام دستور معامله یا تضمین سود نیست.'
             )
-            alerts.append(message)
+
+            alerts.append(message)            alerts.append(message)
 
     # Send first, persist state afterwards. If Telegram fails, next run can retry.
     for alert in alerts:
