@@ -506,10 +506,11 @@ def main():
 
             fees_known = buy_fee is not None and sell_fee is not None
             net_positive = fees_known and result["net_profit"] > 0
+
             route = f'{key[0]}|{key[1]}|{buy["venue"]}|{sell["venue"]}'
             manually_reviewed = route in routes
-            # A route is never labelled confirmed based only on public order books.
-                       route_reviewed = bool(manually_reviewed)
+
+            route_reviewed = bool(manually_reviewed)
 
             status = (
                 "تأییدنشده / نیازمند بررسی انتقال"
