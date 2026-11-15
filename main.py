@@ -509,13 +509,13 @@ def main():
             route = f'{key[0]}|{key[1]}|{buy["venue"]}|{sell["venue"]}'
             manually_reviewed = route in routes
             # A route is never labelled confirmed based only on public order books.
-           route_reviewed = bool(manually_reviewed)
+                       route_reviewed = bool(manually_reviewed)
 
-status = (
-    "تأییدنشده / نیازمند بررسی انتقال"
-    if not route_reviewed
-    else "محاسبات مثبت؛ مسیر دستی بررسی شده، انتقال زنده تأیید نشده"
-)
+            status = (
+                "تأییدنشده / نیازمند بررسی انتقال"
+                if not route_reviewed
+                else "محاسبات مثبت؛ مسیر دستی بررسی شده، انتقال زنده تأیید نشده"
+            )
 
             old = state.get(route, {})
             old_seen = float(old.get("last_seen", 0))
