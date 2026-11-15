@@ -537,6 +537,7 @@ def main():
 
             status = "تأییدنشده / نیازمند بررسی" if not confirmed else "تأییدشده طبق تأیید دستی مسیر"
             unit = "تومان" if key[1] == "TOMAN" else key[1]
+            
             if fees_known:
                 fee_text = (
                     f'کارمزد خرید: {buy_fee * 100:.4f}% | '
