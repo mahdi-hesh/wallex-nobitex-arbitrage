@@ -487,7 +487,6 @@ def main():
         if now - nobitex_market["exchange_ts"] > max_age:
             continue
 
-        for buy, sell in ((wallex_market, nobitex_market), (nobitex_market, wallex_market)):
 
 
         for buy, sell in ((wallex_market, nobitex_market), (nobitex_market, wallex_market)):
