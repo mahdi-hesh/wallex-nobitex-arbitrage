@@ -478,8 +478,12 @@ def main():
         if nobitex_market.get("exchange_ts") is not None:
             if now - nobitex_market["exchange_ts"] > max_age:
                 continue
-        else:
-            logging.warning("Nobitex timestamp missing for %s; opportunity cannot be confirmed", key)
+         else:
+            logging.warning(
+                "Nobitex timestamp missing for %s; skipping opportunity",
+                key
+            )
+            continue
 
         for buy, sell in ((wallex_market, nobitex_market), (nobitex_market, wallex_market)):
             buy_fee = wallex_fee if buy["venue"] == "Wallex" else nobitex_fee
