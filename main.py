@@ -236,20 +236,39 @@ def nobitex_snapshot():
 
 
 
+
 def walk_depth(buy_asks, sell_bids, buy_multiplier, sell_multiplier,
                buy_fee, sell_fee, min_spread_pct):
 
+    buy_multiplier = D(str(buy_multiplier))
+    sell_multiplier = D(str(sell_multiplier))
+    buy_fee = D(str(buy_fee))
+    sell_fee = D(str(sell_fee))
+    min_spread_pct = D(str(min_spread_pct))
+
+    if buy_multiplier <= 0 or sell_multiplier <= 0:
+        return None
+
+    if not (D("0") <= buy_fee < D("1")):
+        return None
+
+    if not (D("0") <= sell_fee < D("1")):
+        return None
+
     asks = [
-        [price * buy_multiplier, qty]
+        [D(str(price)) * buy_multiplier, D(str(qty))]
         for price, qty in buy_asks
-        if price > 0 and qty > 0
+        if D(str(price)) > 0 and D(str(qty)) > 0
     ]
 
     bids = [
-        [price * sell_multiplier, qty]
+        [D(str(price)) * sell_multiplier, D(str(qty))]
         for price, qty in sell_bids
-        if price > 0 and qty > 0
+        if D(str(price)) > 0 and D(str(qty)) > 0
     ]
+
+    asks.sort(key=lambda x: x[0])
+    bids.sort(key=lambda x: x[0], reverse=True)
 
     i = j = 0
     total_qty = D("0")
@@ -299,13 +318,18 @@ def walk_depth(buy_asks, sell_bids, buy_multiplier, sell_multiplier,
     if total_qty <= 0 or total_cost <= 0:
         return None
 
+    buy_fee_amount = total_cost * buy_fee
+    sell_fee_amount = total_revenue * sell_fee
+
     gross_pct = (
         total_revenue / total_cost - D("1")
     ) * D("100")
 
     net_profit = (
-        total_revenue * (D("1") - sell_fee)
-        - total_cost * (D("1") + buy_fee)
+        total_revenue
+        - sell_fee_amount
+        - total_cost
+        - buy_fee_amount
     )
 
     net_pct = net_profit / total_cost * D("100")
@@ -316,6 +340,8 @@ def walk_depth(buy_asks, sell_bids, buy_multiplier, sell_multiplier,
         "sell_avg": total_revenue / total_qty,
         "cost": total_cost,
         "revenue": total_revenue,
+        "buy_fee_amount": buy_fee_amount,
+        "sell_fee_amount": sell_fee_amount,
         "gross_pct": gross_pct,
         "net_profit": net_profit,
         "net_pct": net_pct,
