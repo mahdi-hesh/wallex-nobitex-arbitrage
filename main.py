@@ -586,7 +586,7 @@ def main():
                 'این پیام دستور معامله یا تضمین سود نیست.'
             )
 
-            alerts.append(message)            alerts.append(message)
+            alerts.append(message)            
 
     # Send first, persist state afterwards. If Telegram fails, next run can retry.
     for alert in alerts:
