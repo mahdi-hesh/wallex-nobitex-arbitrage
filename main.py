@@ -421,7 +421,15 @@ def send_telegram(message):
 
 
 def money(value):
-    return f"{value:,.0f}"
+    value = D(str(value))
+
+    if value == 0:
+        return "0.0000"
+
+    if abs(value) < 100:
+        return f"{value:,.4f}"
+
+    return f"{value:,.2f}"
 
 
 def market_url(market):
