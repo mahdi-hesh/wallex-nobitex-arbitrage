@@ -475,9 +475,17 @@ def main():
             continue
         if abs(wallex_market["received_at"] - nobitex_market["received_at"]) > max_capture_gap:
             continue
-        if nobitex_market.get("exchange_ts") is not None:
-            if now - nobitex_market["exchange_ts"] > max_age:
-                continue
+        
+        if nobitex_market.get("exchange_ts") is None:
+            logging.warning(
+                "Nobitex timestamp missing for %s; skipping opportunity",
+                key
+            )
+            continue
+
+        if now - nobitex_market["exchange_ts"] > max_age:
+            continue
+
       else:
             logging.warning(
                 "Nobitex timestamp missing for %s; skipping opportunity",
