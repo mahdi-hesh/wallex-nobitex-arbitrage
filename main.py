@@ -541,21 +541,21 @@ def main():
             status = "تأییدنشده / نیازمند بررسی" if not confirmed else "تأییدشده طبق تأیید دستی مسیر"
             unit = "تومان" if key[1] == "TOMAN" else key[1]
             
-            if fees_known:
-    fee_text = (
-        f'کارمزد خرید: {buy_fee * 100:.4f}% '
-        f'({money(result["buy_fee_amount"])} {unit}) | '
-        f'کارمزد فروش: {sell_fee * 100:.4f}% '
-        f'({money(result["sell_fee_amount"])} {unit})'
-    )
-    net_text = (
-        f'سود خالص تخمینی پس از کارمزد: '
-        f'{money(result["net_profit"])} {unit} '
-        f'({result["net_pct"]:.3f}%)'
-    )
-else:
-    fee_text = "کارمزدها: نامشخص؛ سود خالص قابل تأیید نیست"
-    net_text = "سود خالص: نامشخص"
+                        if fees_known:
+                fee_text = (
+                    f'کارمزد خرید: {buy_fee * 100:.4f}% '
+                    f'({money(result["buy_fee_amount"])} {unit}) | '
+                    f'کارمزد فروش: {sell_fee * 100:.4f}% '
+                    f'({money(result["sell_fee_amount"])} {unit})'
+                )
+                net_text = (
+                    f'سود خالص تخمینی پس از کارمزد: '
+                    f'{money(result["net_profit"])} {unit} '
+                    f'({result["net_pct"]:.3f}%)'
+                )
+            else:
+                fee_text = "کارمزدها: نامشخص؛ سود خالص قابل تأیید نیست"
+                net_text = "سود خالص: نامشخص"
 
             timestamp_quality = (
                 "زمان دفتر سفارش نوبیتکس موجود است"
